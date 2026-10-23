@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Etanol ou Gasolina?</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b8a3a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Etanol x Gasolina">
 <style>
 :root{--bg:#f5f5f2;--card:#fff;--text:#1a1a1a;--muted:#6b6b66;--line:#d9d9d3;--eth:#1b8a3a;--gas:#d9480f;--neutral:#e9e9e4;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -48,8 +55,8 @@ input::placeholder{color:var(--line)}
   <div class="top" id="top">Digite o preço do etanol</div>
   <div class="big" id="big" hidden></div>
   <div class="rule" id="rule" hidden>
-    <div>🟢 Gasolina acima disso: <b>ETANOL</b></div>
-    <div>🔴 Gasolina abaixo disso: <b>GASOLINA</b></div>
+    <div>🟢 Gasolina ACIMA disso: <b>ETANOL</b></div>
+    <div>🔴 Gasolina ABAIXO disso: <b>GASOLINA</b></div>
   </div>
 </div>
 
@@ -83,7 +90,7 @@ input::placeholder{color:var(--line)}
       big.hidden=true; rule.hidden=true;
     } else {
       res.className='result ok';
-      top.textContent='Etanol compensa se a gasolina custar mais de';
+      top.textContent='Etanol compensa se a gasolina custar MAIS DE';
       big.textContent=brl(e/LIMIT);
       big.hidden=false; rule.hidden=false;
     }
@@ -109,6 +116,7 @@ input::placeholder{color:var(--line)}
   eth.addEventListener('input',calc);
   document.getElementById('clear').addEventListener('click',function(){eth.value='';calc();eth.focus();});
   showNote(); calc();
+  if('serviceWorker' in navigator){ window.addEventListener('load',function(){ try{ navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(x){} }); }
 })();
 </script>
 </body>
