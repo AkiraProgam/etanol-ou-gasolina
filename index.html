@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Etanol ou Gasolina?</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1a1a1a;--muted:#6b6b66;--line:#d9d9d3;--eth:#1b8a3a;--gas:#d9480f;--neutral:#e9e9e4;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111210;--card:#1c1d1b;--text:#f1f1ec;--muted:#a0a09a;--line:#34352f;--eth:#2fbf57;--gas:#ff7a3d;--neutral:#262723}}
+:root[data-theme="dark"]{--bg:#111210;--card:#1c1d1b;--text:#f1f1ec;--muted:#a0a09a;--line:#34352f;--eth:#2fbf57;--gas:#ff7a3d;--neutral:#262723}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+main{max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 14px;text-align:center}
+label{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+label span{display:block;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.inp{display:flex;align-items:baseline;gap:8px}
+.inp b{font-size:22px;color:var(--muted)}
+input{width:100%;border:0;background:transparent;color:var(--text);font-size:48px;font-weight:800;outline:none;padding:0;min-width:0}
+input::placeholder{color:var(--line)}
+.result{margin-top:14px;border-radius:20px;padding:26px 16px;text-align:center;background:var(--neutral);color:var(--muted)}
+.result.ok{background:var(--eth);color:#fff}
+.result .top{font-size:17px;opacity:.95}
+.result .big{font-size:56px;font-weight:800;line-height:1.1;margin:8px 0;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.result .rule{font-size:17px;font-weight:600;line-height:1.5}
+.result .rule div+div{margin-top:4px}
+.pctbox{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+.pctbox .lbl{font-size:14px;font-weight:600;color:var(--muted)}
+.pctbox .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pctbox input{font-size:28px;width:90px;text-align:center;border:1px solid var(--line);border-radius:12px;padding:6px 4px;font-weight:700}
+.pctbox .sym{font-size:24px;font-weight:700;color:var(--muted)}
+.pctbox button{flex:1;padding:12px;border-radius:12px;border:0;background:var(--eth);color:#fff;font-size:16px;font-weight:700}
+.pctbox .small{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px;color:var(--muted);min-height:20px}
+.pctbox .small a{color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:0;font-size:13px;padding:0}
+.clear{display:block;width:100%;margin-top:14px;padding:14px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:16px}
+.note{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>⛽ Etanol ou Gasolina?</h1>
+
+<label><span>Preço do ETANOL</span><div class="inp"><b>R$</b><input id="eth" inputmode="decimal" placeholder="0,00" autocomplete="off"></div></label>
+
+<div class="result" id="result" aria-live="polite">
+  <div class="top" id="top">Digite o preço do etanol</div>
+  <div class="big" id="big" hidden></div>
+  <div class="rule" id="rule" hidden>
+    <div>🟢 Gasolina acima disso: <b>ETANOL</b></div>
+    <div>🔴 Gasolina abaixo disso: <b>GASOLINA</b></div>
+  </div>
+</div>
+
+<div class="pctbox">
+  <div class="lbl">Percentual de corte (padrão 70%)</div>
+  <div class="row">
+    <input id="pct" inputmode="decimal" value="70" autocomplete="off" aria-label="Percentual"><span class="sym">%</span>
+    <button id="savepct">Salvar</button>
+  </div>
+  <div class="small"><span id="pmsg"></span><button class="link" id="restore" style="background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;padding:0">Voltar para 70%</button></div>
+</div>
+
+<button class="clear" id="clear">Limpar</button>
+<p class="note" id="note">Regra dos 70%: o etanol compensa se custar até 70% do preço da gasolina.</p>
+</main>
+
+<script>
+(function(){
+  var eth=document.getElementById('eth'), res=document.getElementById('result');
+  var top=document.getElementById('top'), big=document.getElementById('big'), rule=document.getElementById('rule');
+  var LIMIT=0.70;
+
+  function num(v){ var n=parseFloat(String(v).replace(',','.')); return isFinite(n)&&n>0?n:null; }
+  function brl(n){ return 'R$ '+n.toFixed(2).replace('.',','); }
+
+  function calc(){
+    var e=num(eth.value);
+    if(!e){
+      res.className='result';
+      top.textContent='Digite o preço do etanol';
+      big.hidden=true; rule.hidden=true;
+    } else {
+      res.className='result ok';
+      top.textContent='Etanol compensa se a gasolina custar mais de';
+      big.textContent=brl(e/LIMIT);
+      big.hidden=false; rule.hidden=false;
+    }
+    try{ localStorage.setItem('eg_eth',eth.value); }catch(x){}
+  }
+
+  var pctInp=document.getElementById('pct'), pmsg=document.getElementById('pmsg'), noteEl=document.getElementById('note');
+  function showNote(){ var p=String(Math.round(LIMIT*1000)/10).replace('.',','); noteEl.textContent='Regra dos '+p+'%: o etanol compensa se custar até '+p+'% do preço da gasolina.'; }
+  function setLimit(p,persist){
+    LIMIT=p/100; pctInp.value=String(p).replace('.',',');
+    if(persist){ try{ localStorage.setItem('eg_limit',String(p)); }catch(x){} }
+    showNote(); calc();
+  }
+  try{ var sv=parseFloat(localStorage.getItem('eg_limit')); if(isFinite(sv)&&sv>=30&&sv<=100){ LIMIT=sv/100; pctInp.value=String(sv).replace('.',','); } }catch(x){}
+  document.getElementById('savepct').addEventListener('click',function(){
+    var p=parseFloat(pctInp.value.replace(',','.'));
+    if(!isFinite(p)||p<30||p>100){ pmsg.textContent='Use um valor entre 30 e 100'; return; }
+    setLimit(p,true); pmsg.textContent='✓ Salvo: '+String(p).replace('.',',')+'%';
+  });
+  document.getElementById('restore').addEventListener('click',function(){ setLimit(70,true); pmsg.textContent='✓ Voltou para 70%'; });
+  pctInp.addEventListener('input',function(){ pmsg.textContent=''; });
+  try{ eth.value=localStorage.getItem('eg_eth')||''; }catch(x){}
+  eth.addEventListener('input',calc);
+  document.getElementById('clear').addEventListener('click',function(){eth.value='';calc();eth.focus();});
+  showNote(); calc();
+})();
+</script>
+</body>
+</html>
