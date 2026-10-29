@@ -155,7 +155,14 @@ details .inner{padding:0 0 14px}
   tabEth.addEventListener('click',function(){ if(MODE!=='eth') setMode('eth'); });
   tabGas.addEventListener('click',function(){ if(MODE!=='gas') setMode('gas'); });
   try{ var sm=localStorage.getItem('eg_mode'); if(sm==='eth'||sm==='gas') MODE=sm; }catch(x){}
-  eth.addEventListener('input',calc);
+  eth.addEventListener('input',function(){
+    if(eth.value.indexOf('.')>-1){
+      var pos=eth.selectionStart;
+      eth.value=eth.value.replace(/\./g,',');
+      try{ eth.setSelectionRange(pos,pos); }catch(x){}
+    }
+    calc();
+  });
   document.getElementById('clear').addEventListener('click',function(){eth.value='';calc();eth.focus();});
   setMode(MODE);
   showNote(); calc();
